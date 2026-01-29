@@ -86,6 +86,16 @@ public class CapacitorUrlRequest: NSObject, URLSessionTaskDelegate {
         return Data(stringData.utf8)
     }
 
+    private func getRequestDataAsBase64(_ data: JSValue) throws -> Data {
+        guard let stringData = data as? String else {
+            throw CapacitorUrlRequestError.serializationError("[ data ] argument could not be parsed as base64 string")
+        }
+        guard let decoded = Data(base64Encoded: stringData) else {
+            throw CapacitorUrlRequestError.serializationError("[ data ] argument could not be decoded from base64")
+        }
+        return decoded
+    }
+
     func getRequestHeader(_ index: String) -> Any? {
         var normalized = [:] as [String:Any]
         self.headers.keys.forEach { (key: String) in
@@ -118,7 +128,12 @@ public class CapacitorUrlRequest: NSObject, URLSessionTaskDelegate {
         }
     }
     
-    public func setRequestBody(_ body: JSValue) throws {
+    public func setRequestBody(_ body: JSValue, dataIsBase64: Bool) throws {
+        if dataIsBase64 {
+            request.httpBody = try getRequestDataAsBase64(body)
+            return
+        }
+
         let contentType = self.getRequestHeader("Content-Type") as? String
 
         if contentType != nil {

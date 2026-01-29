@@ -37,6 +37,14 @@ export interface HttpOptions {
   method?: string;
   params?: HttpParams;
   data?: any;
+  /**
+   * If true, `data` is treated as a base64-encoded string and will be decoded to raw bytes
+   * before sending the request body. This is required for sending arbitrary binary payloads
+   * (e.g. gzipped request bodies) natively.
+   *
+   * Note: This is mainly for native (iOS/Android). On web you can usually pass a `Blob`/`Uint8Array`.
+   */
+  dataIsBase64?: boolean;
   headers?: HttpHeaders;
   /**
    * How long to wait to read additional data. Resets each time new
@@ -172,7 +180,7 @@ export interface HttpDownloadFileResult {
   blob?: Blob;
 }
 
-export interface HttpUploadFileResult extends HttpResponse {}
+export interface HttpUploadFileResult extends HttpResponse { }
 
 export type ProgressType = 'DOWNLOAD' | 'UPLOAD';
 
