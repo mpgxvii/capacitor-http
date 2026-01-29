@@ -190,7 +190,6 @@ iOSInjectionProject/
 # Web ignore
 # ==========
 node_modules
-dist
 
 # ==============
 # Example ignore
