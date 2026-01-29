@@ -83,6 +83,43 @@ const doPost = () => {
   // const response = await Http.request({ ...options, method: 'POST' })
 };
 
+// Example of sending a gzipped request body (native iOS/Android).
+// Using pako.gzip() to compress, then base64-encode for native platforms.
+//
+// Headers:
+// - Content-Encoding: gzip
+// - Content-Type: application/json (or whatever your server expects after decompression)
+//
+// Note: On web, you can send the Uint8Array/Blob directly without base64 encoding.
+import pako from 'pako';
+
+const doPostGzipped = async () => {
+  const jsonData = JSON.stringify({ foo: 'bar', large: 'data...' });
+  
+  // Compress with pako (returns Uint8Array)
+  const gzippedBytes = pako.gzip(jsonData);
+  
+  // Convert to base64 for native platforms
+  // Method 1: Using btoa with binary string conversion
+  const binaryString = Array.from(gzippedBytes, byte => String.fromCharCode(byte)).join('');
+  const gzippedBytesB64 = btoa(binaryString);
+  
+  // Method 2: Using Buffer (Node.js/React Native) - if available
+  // const gzippedBytesB64 = Buffer.from(gzippedBytes).toString('base64');
+  
+  const options = {
+    url: 'https://example.com/my/api',
+    headers: {
+      'Content-Type': 'application/json',
+      'Content-Encoding': 'gzip',
+    },
+    dataIsBase64: true,  // Tell plugin to decode base64 back to raw bytes
+    data: gzippedBytesB64,
+  };
+
+  const response: HttpResponse = await Http.post(options);
+};
+
 const setCookie = async () => {
   const options = {
     url: 'http://example.com',

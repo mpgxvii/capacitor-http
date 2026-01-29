@@ -175,7 +175,8 @@ class HttpRequestHandler {
 
         if let data = call.options["data"] as? JSValue {
             do {
-                try request.setRequestBody(data)
+                let dataIsBase64 = call.getBool("dataIsBase64") ?? false
+                try request.setRequestBody(data, dataIsBase64: dataIsBase64)
             } catch {
                 // Explicitly reject if the http request body was not set successfully,
                 // so as to not send a known malformed request, and to provide the developer with additional context.
