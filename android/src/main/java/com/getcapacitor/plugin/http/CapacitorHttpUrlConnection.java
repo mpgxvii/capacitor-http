@@ -3,6 +3,7 @@ package com.getcapacitor.plugin.http;
 import android.os.Build;
 import android.os.LocaleList;
 import android.text.TextUtils;
+import android.util.Base64;
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.PluginCall;
@@ -172,6 +173,14 @@ public class CapacitorHttpUrlConnection implements ICapacitorHttpUrlConnection {
         String contentType = connection.getRequestProperty("Content-Type");
         String dataString = "";
 
+        Boolean dataIsBase64 = call.getBoolean("dataIsBase64", false);
+        if (dataIsBase64 != null && dataIsBase64) {
+            String base64 = call.getString("data", "");
+            byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
+            this.writeRequestBody(bytes);
+            return;
+        }
+
         if (contentType == null || contentType.isEmpty()) return;
 
         if (contentType.contains("application/json")) {
@@ -227,6 +236,18 @@ public class CapacitorHttpUrlConnection implements ICapacitorHttpUrlConnection {
     private void writeRequestBody(String body) throws IOException {
         try (DataOutputStream os = new DataOutputStream(connection.getOutputStream())) {
             os.write(body.getBytes(StandardCharsets.UTF_8));
+            os.flush();
+        }
+    }
+
+    /**
+     * Writes raw bytes to the HTTP connection managed by this instance.
+     *
+     * @param bodyBytes The raw bytes to write to the connection stream.
+     */
+    private void writeRequestBody(byte[] bodyBytes) throws IOException {
+        try (DataOutputStream os = new DataOutputStream(connection.getOutputStream())) {
+            os.write(bodyBytes);
             os.flush();
         }
     }
