@@ -181,6 +181,28 @@ var capacitorCommunityHttp = (function (exports, core) {
     // Get the content-type
     const headers = normalizeHttpHeaders(options.headers);
     const type = headers['content-type'] || '';
+    // If user is passing raw bytes (base64), decode for web fetch.
+    // On native, `dataIsBase64` is handled in the platform layers.
+    if (options.dataIsBase64 && typeof options.data === 'string') {
+      const binary = atob(options.data);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      output.body = bytes;
+      return output;
+    }
+    // If body is already a supported BodyInit (Blob/ArrayBuffer/TypedArray), pass through.
+    if (
+      typeof options.data === 'object' &&
+      options.data != null &&
+      (options.data instanceof Blob ||
+        options.data instanceof ArrayBuffer ||
+        ArrayBuffer.isView(options.data))
+    ) {
+      output.body = options.data;
+      return output;
+    }
     // If body is already a string, then pass it through as-is.
     if (typeof options.data === 'string') {
       output.body = options.data;
