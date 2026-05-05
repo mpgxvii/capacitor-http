@@ -140,6 +140,9 @@ public class CapacitorHttpUrlConnection implements ICapacitorHttpUrlConnection {
      * @param headers the JSObject values to map to the HttpUrlConnection request headers
      */
     public void setRequestHeaders(JSObject headers) {
+        if (headers == null) {
+            return;
+        }
         Iterator<String> keys = headers.keys();
         while (keys.hasNext()) {
             String key = keys.next();
@@ -176,6 +179,9 @@ public class CapacitorHttpUrlConnection implements ICapacitorHttpUrlConnection {
         Boolean dataIsBase64 = call.getBoolean("dataIsBase64", false);
         if (dataIsBase64 != null && dataIsBase64) {
             String base64 = call.getString("data", "");
+            if (base64 == null) {
+                return;
+            }
             byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
             this.writeRequestBody(bytes);
             return;
@@ -195,15 +201,26 @@ public class CapacitorHttpUrlConnection implements ICapacitorHttpUrlConnection {
             } else if (body == null) {
                 dataString = call.getString("data");
             }
-            this.writeRequestBody(dataString.toString());
+            if (dataString != null) {
+                this.writeRequestBody(dataString);
+            }
         } else if (contentType.contains("application/x-www-form-urlencoded")) {
+            if (body == null) {
+                return;
+            }
             StringBuilder builder = new StringBuilder();
 
             JSObject obj = body.toJSObject();
+            if (obj == null) {
+                return;
+            }
             Iterator<String> keys = obj.keys();
             while (keys.hasNext()) {
                 String key = keys.next();
                 Object d = obj.get(key);
+                if (d == null) {
+                    continue;
+                }
                 builder.append(key).append("=").append(URLEncoder.encode(d.toString(), "UTF-8"));
 
                 if (keys.hasNext()) {
@@ -212,19 +229,31 @@ public class CapacitorHttpUrlConnection implements ICapacitorHttpUrlConnection {
             }
             this.writeRequestBody(builder.toString());
         } else if (contentType.contains("multipart/form-data")) {
+            if (body == null) {
+                return;
+            }
             FormUploader uploader = new FormUploader(connection);
 
             JSObject obj = body.toJSObject();
+            if (obj == null) {
+                return;
+            }
             Iterator<String> keys = obj.keys();
             while (keys.hasNext()) {
                 String key = keys.next();
 
-                String d = obj.get(key).toString();
+                Object value = obj.get(key);
+                if (value == null) {
+                    continue;
+                }
+                String d = value.toString();
                 uploader.addFormField(key, d);
             }
             uploader.finish();
         } else {
-            this.writeRequestBody(body.toString());
+            if (body != null && body.getValue() != null) {
+                this.writeRequestBody(body.toString());
+            }
         }
     }
 

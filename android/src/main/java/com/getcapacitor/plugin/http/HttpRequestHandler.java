@@ -123,15 +123,18 @@ public class HttpRequestHandler {
 
         public HttpURLConnectionBuilder setUrlParams(JSObject params, boolean shouldEncode)
             throws URISyntaxException, MalformedURLException {
+            if (params == null) {
+                return this;
+            }
             String initialQuery = url.getQuery();
             String initialQueryBuilderStr = initialQuery == null ? "" : initialQuery;
 
             Iterator<String> keys = params.keys();
-            
+
             if (!keys.hasNext()) {
                 return this;
             }
-            
+
             StringBuilder urlQueryBuilder = new StringBuilder(initialQueryBuilderStr);
 
             // Build the new query string
@@ -143,20 +146,31 @@ public class HttpRequestHandler {
                     StringBuilder value = new StringBuilder();
                     JSONArray arr = params.getJSONArray(key);
                     for (int x = 0; x < arr.length(); x++) {
-                        value.append(key).append("=").append(arr.getString(x));
-                        if (x != arr.length() - 1) {
+                        String paramValue = arr.isNull(x) ? null : arr.getString(x);
+                        if (paramValue == null) {
+                            continue;
+                        }
+                        if (value.length() > 0) {
                             value.append("&");
                         }
+                        value.append(key).append("=").append(paramValue);
+                    }
+                    if (value.length() == 0) {
+                        continue;
                     }
                     if (urlQueryBuilder.length() > 0) {
                         urlQueryBuilder.append("&");
                     }
                     urlQueryBuilder.append(value);
                 } catch (JSONException e) {
+                    String paramValue = params.isNull(key) ? null : params.getString(key);
+                    if (paramValue == null) {
+                        continue;
+                    }
                     if (urlQueryBuilder.length() > 0) {
                         urlQueryBuilder.append("&");
                     }
-                    urlQueryBuilder.append(key).append("=").append(params.getString(key));
+                    urlQueryBuilder.append(key).append("=").append(paramValue);
                 }
             }
 
@@ -167,7 +181,13 @@ public class HttpRequestHandler {
                 URI encodedUri = new URI(uri.getScheme(), uri.getAuthority(), uri.getPath(), urlQuery, uri.getFragment());
                 this.url = encodedUri.toURL();
             } else {
-                String unEncodedUrlString = uri.getScheme() + "://" + uri.getAuthority() + uri.getPath() + ((!urlQuery.equals("")) ? "?" + urlQuery : "") + ((uri.getFragment() != null) ? uri.getFragment() : "");
+                String unEncodedUrlString =
+                    uri.getScheme() +
+                    "://" +
+                    uri.getAuthority() +
+                    uri.getPath() +
+                    ((!urlQuery.equals("")) ? "?" + urlQuery : "") +
+                    ((uri.getFragment() != null) ? uri.getFragment() : "");
                 this.url = new URL(unEncodedUrlString);
             }
 
